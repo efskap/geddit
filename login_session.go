@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -295,6 +296,30 @@ func (s LoginSession) Delete(d Deleter) error {
 		return errors.New("failed to delete item")
 	}
 
+	return nil
+}
+
+func (s LoginSession) EditComment(comment *Comment, newText string) error {
+
+	req := &request{
+		url: "https://www.reddit.com/api/editusertext",
+		values: &url.Values{
+			"thing_id": {comment.FullID},
+			"text":     {html.UnescapeString(newText)},
+			"uh":       {s.modhash}, //{s.modhash},
+		},
+		cookie:    s.cookie,
+		useragent: s.useragent,
+	}
+
+	body, err := req.getResponse()
+	if err != nil {
+		return err
+	}
+
+	if !strings.Contains(body.String(), "data") {
+		return errors.New("failed to edit comment")
+	}
 	return nil
 }
 
